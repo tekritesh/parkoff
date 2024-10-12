@@ -1,0 +1,33 @@
+{
+    "settings": {
+        "model":"yolo11n.pt"
+    },
+    "img_cache":{
+        "input_dir": "/Users/riteshtekriwal/Work/GitClones/parkoff/sample_data/input/",
+        "output_dir": "/Users/riteshtekriwal/Work/GitClones/parkoff/sample_data/output/"
+
+    },
+    "img_source": [
+        {
+            "url": "https://www.seattle.gov/trafficcams/images/1_Seneca_EW.jpg",
+            "timeout_s": 60
+            },
+        {
+            "url": "https://www.seattle.gov/trafficcams/images/1_Union_NS.jpg",
+            "timeout_s": 60
+            
+            },
+        {
+            "url": "https://www.seattle.gov/trafficcams/images/1_Stewart_NS.jpg",
+            "timeout_s": 60
+            
+            },
+        {
+            "url": "https://www.seattle.gov/trafficcams/images/1_Madison_NS.jpg",
+            "timeout_s": 60
+                
+            }
+
+    ]
+        
+}
