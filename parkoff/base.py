@@ -26,7 +26,7 @@ class ParkOff():
     def _read_image_from_url(self,url):
         # Fetch the image from the URL
         self.log.debug("Fetching image from %s" % (url))
-        response = requests.get(url)
+        response = requests.get(url,verify=False)
         if response.status_code == 200:
             # Convert the response content to a NumPy array
             image_array = np.array(Image.open(BytesIO(response.content)))
@@ -53,6 +53,27 @@ class ParkOff():
         self.log.info(f"Loading Settings from '{json_file_path}'" )
 
 
+    def _check_model_format(self):
+        """exports model to NCNN for embedded devices
+        args:
+            
+        """
+        model_name = self.settings_json['settings']['model']
+        
+        if self.settings_json['settings']['format'] == "ncnn":
+            model_name,ext =  os.path.splitext(model_name)
+            print(model_name)
+            model_name = f"{model_name}_ncnn_model"
+            if not os.path.exists(model_name):
+                self.log.info(f"Did Not Find Model'{model_name}', Generating....")
+                model = YOLO(self.settings_json['settings']['model'])
+                model.export(format="ncnn")  # creates 'yolo11n_ncnn_model'
+
+        
+        self.log.info(f"Loading Model'{model_name}'")
+        return model_name
+
+
     def cache_image_from_url(self,url="", cache_dir=""):
        
         # url = 'https://www.seattle.gov/trafficcams/images/1_Seneca_EW.jpg?619'
@@ -73,7 +94,11 @@ class ParkOff():
 
     def analyse_image(self, model='',input_img_dir="", output_img_dir=""):
 
-        model = YOLO(self.settings_json['settings']['model'])  # load a pretrained model (recommended for training)
+        model_name = self._check_model_format()
+        
+        model = YOLO(model_name)  # load a pretrained model (recommended for training)
+
+        
         # Use the model
         # model.train(data="coco8.yaml", epochs=3)  # train the model
         # metrics = model.val()  # evaluate model performance on the validation set
