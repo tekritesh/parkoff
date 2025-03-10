@@ -12,6 +12,7 @@ import time
 
 import subprocess
 import platform
+import sys
 
 class ParkOff():
     
@@ -29,6 +30,7 @@ class ParkOff():
             self.log = logger
         
         self._load_settings(settings_json)
+        self.tempC = -1
 
     def _read_image_from_url(self,url):
         # Fetch the image from the URL
@@ -60,15 +62,25 @@ class ParkOff():
         
             self.log.info(f"Loading Settings from '{json_file_path}'" )
 
+            if not os.path.exists(json_file_path):
+                self.log.info(f"File {json_file_path} Not Found")
+                json_file_path = "../settings.json"
+                self.log.info(f"Attempting to load default path {json_file_path}")
+        
+
             f = open(json_file_path,"r")
             self.settings_json = json.loads(f.read())
             f.close()
+
+            self.log.info("Settings Loaded!")
             
             
         except Exception as e:
             self.log.error(e)
+            sys.exit()
+            
         
-        self.log.info("Settings Loaded!")
+        
 
 
     def _check_model_format(self):
@@ -102,7 +114,6 @@ class ParkOff():
 
         if not os.path.exists(cache_dir):
             self.log.info(f"Output Directory Doesnt Exist at'{cache_dir}'")
-        else :
             self.log.info(f"Creating Output Directory at'{cache_dir}'")
             os.makedirs(cache_dir, exist_ok=True)
 
@@ -111,6 +122,13 @@ class ParkOff():
         cv2.imwrite(output_path, image)
 
     def analyse_image(self, model='',input_img_dir="", output_img_dir=""):
+
+        self.tempC = self.get_cpu_temperature()
+
+        if self.tempC > 75:
+            self.log.info(f"CPU Temperature is high[{self.tempC}], will analyse results later..")
+            return
+             
 
         model_name = self._check_model_format()
         
@@ -129,41 +147,45 @@ class ParkOff():
             if filename.endswith(('.jpg', '.jpeg', '.png')):
                 
                 image_path = os.path.join(input_img_dir, filename)
-                self.log.debug(f"Running Analysis on Input Image'{image_path}'")
-                output_path = os.path.join(output_img_dir, filename)
-                self.log.debug(f"Output Image'{output_path}'")
-
-                # image = cv2.imread(image_path)
-                image = cv2.imread(image_path)
-                image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-                # results = self.model(image_path)
-
-                # TODO: Find a better way to find size of image and pass image size closed to yolo acceptable dimension
-                results = self.model.predict(
-                    source= image_rgb, 
-                    conf = self.settings_json['settings']["model"]['confidence'],
-                    iou = self.settings_json['settings']["model"]['iou'],
-                    # imgsz = (height,width),
-                    imgsz = (480,736),
-                    augment =True,
-                    classes = self._get_yolo_class_ids(self.model, ['car','truck','bus','bicycle','fire hydrant','tree']),
-                    # visualize = True,
-                    # max_det = 3
-                    # visualise
-                    )
-
-                self.log.debug(f"Found {len(results)} elements in the image")
                 
-                vehicles = self._get_vehicles(results)
+                output_path = os.path.join(output_img_dir, filename)
+                
+                
+                if not os.path.exists(output_path):
+
+                    self.log.info(f"Running Analysis on Input Image'{image_path}'")
+                    self.log.debug(f"Output Image'{output_path}'")
+                    # image = cv2.imread(image_path)
+                    image = cv2.imread(image_path)
+                    image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+                    # results = self.model(image_path)
+
+                    # TODO: Find a better way to find size of image and pass image size closed to yolo acceptable dimension
+                    results = self.model.predict(
+                        source= image_rgb, 
+                        conf = self.settings_json['settings']["model"]['confidence'],
+                        iou = self.settings_json['settings']["model"]['iou'],
+                        # imgsz = (height,width),
+                        imgsz = (480,736),
+                        augment =True,
+                        classes = self._get_yolo_class_ids(self.model, ['car','truck','bus','bicycle','fire hydrant','tree']),
+                        # visualize = True,
+                        # max_det = 3
+                        # visualise
+                        )
+
+                    self.log.debug(f"Found {len(results)} elements in the image")
+                    
+                    vehicles = self._get_vehicles(results)
 
 
-                curbs = self._get_curbs(image_rgb)
+                    curbs = self._get_curbs(image_rgb)
 
-                parked_vehicles = self._find_parked_vehicles(vehicles, curbs)
+                    parked_vehicles = self._find_parked_vehicles(vehicles, curbs)
 
-                result_image = self._draw_image(image_rgb, curbs, parked_vehicles)
+                    result_image = self._draw_image(image_rgb, curbs, parked_vehicles)
 
-                cv2.imwrite(img=result_image,filename=output_path)
+                    cv2.imwrite(img=result_image,filename=output_path)
 
 
             # for result in results:
