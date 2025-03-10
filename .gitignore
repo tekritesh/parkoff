@@ -172,3 +172,12 @@ cython_debug/
 *.json
 *.pt
 *.lock
+
+# models
+*.pt
+*.torchscript
+
+*_ncnn_model*
+
+.idea
+.DS_Store
