@@ -344,7 +344,13 @@ tail -f Data/parkoff/logfile.log
 ## Contributing
 
 
+## Mass Production Readiness:
+The package has been released on PyPi [here](https://pypi.org/project/parkoff/)
 
+
+
+## Conclusion:
+While this project is a Work in Progress, it bears some interesting possibilites with regards to monitoring and understand traffic patterns. It also confirms the fact that a RPI 4 is sufficient for the needs of such a work. 
 
 ## 8. References:
 - [Wikipedia](https://www.wikipedia.org/)
