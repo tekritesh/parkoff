@@ -8,13 +8,13 @@ Finding a parking spot in downtown of any city is a major issue and especially w
 
 [Seattle Gov](https://www.seattle.gov/) has an extensive array of Traffic Cameras spread across the city that update the image and sometimes videos every minute. 
 
-<img src="img/seattle_gov.png" width="400">
+<img src="parkoff/img/seattle_gov.png" width="400">
 
 
 The cameras are located on all major jucntions and crossings and have a decent picture as you can see 
 
-<img src="img/sample.png" width="200"> 
-<img src="img/sample2.png" width="200">
+<img src="parkoff/img/sample.png" width="200"> 
+<img src="parkoff/img/sample2.png" width="200">
 
 
 This project aims at querying this data, make a cache, and then run some object detection model on these images to find cars parked by the curbs.
@@ -71,7 +71,7 @@ Finally, this could all be overlaid as a custom layer on Open Street Maps.
 
 ## Design Flow
 
-<img src="img/alg_flow.png" width="800">
+<img src="parkoff/img/alg_flow.png" width="800">
 
 ## Folder Structure
 
@@ -245,7 +245,7 @@ You can view the status of the service
 ```
 sudo systemctl status parkoff.service
 ```
-<img src="img/service_status.png" width="600"> 
+<img src="parkoff/img/service_status.png" width="600"> 
 
 Or even stop it 
 ```
@@ -301,7 +301,7 @@ Once done, you should be able to see the raw images being cached in ``` "/home/p
 **Circular Logs**
 
 The scheduler defines a circular logger to log all input of status
-<img src="img/logger.png" width="400"> 
+<img src="parkoff/img/logger.png" width="400"> 
 
 This saves at max 3 files of 1MB each.
 
@@ -315,11 +315,11 @@ tail -f Data/parkoff/app_parkoff.log
 
 There is built in temperature monitoring. Before every anaylysis of any image, the temperature is checked and only if the temperature is ```<75 degC``` the images are analysed. The below logs show how the temperature increases as every image is analysed.  
 
-<img src="img/monitor_flow.png" width="200"> 
+<img src="parkoff/img/monitor_flow.png" width="200"> 
 
 
 Here is a look at the logs on RPi
-<img src="img/temp_monitor.png" width="600"> 
+<img src="parkoff/img/temp_monitor.png" width="600"> 
 
 In case the temperature is over the set threshold, the service skips analysing the images and only caches the files. It is designed to come back for analysing at a later point in time. 
 
@@ -335,7 +335,7 @@ tail -f Data/parkoff/logfile.log
 
 ```
 
-<img src="img/service_status.png" width="600"> 
+<img src="parkoff/img/service_status.png" width="600"> 
 
 
 
