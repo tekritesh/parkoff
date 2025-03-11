@@ -110,25 +110,20 @@ class ParkOff():
         image = self._read_image_from_url(url)
 
         if cache_dir == "":
-            cache_dir = os.path.join(os.getcwd()+'sample_data','input')
+            cache_dir = os.path.join(os.getcwd(),'sample_data','input')
 
         if not os.path.exists(cache_dir):
             self.log.info(f"Output Directory Doesnt Exist at'{cache_dir}'")
             self.log.info(f"Creating Output Directory at'{cache_dir}'")
             os.makedirs(cache_dir, exist_ok=True)
 
-        output_path = cache_dir+str(datetime.datetime.now())+'.png' 
+        output_path = os.path.join(cache_dir,str(datetime.datetime.now())+'.png') 
         self.log.info(f"Saving Image: '{output_path}'")
         cv2.imwrite(output_path, image)
 
-    def analyse_image(self, model='',input_img_dir="", output_img_dir=""):
+    def analyse_image(self, model='',input_img_dir="", output_img_dir="", debug = False):
 
-        self.tempC = self.get_cpu_temperature()
-
-        if self.tempC > 75:
-            self.log.info(f"CPU Temperature is high[{self.tempC}], will analyse results later..")
-            return
-             
+        
 
         model_name = self._check_model_format()
         
@@ -139,12 +134,19 @@ class ParkOff():
         # model.train(data="coco8.yaml", epochs=3)  # train the model
         # metrics = model.val()  # evaluate model performance on the validation set
         # img_path= "/Users/riteshtekriwal/Work/GitClones/adhoc/sample_data/input/test1_2024-07-03 22:47:24.336888.png"
-        input_img_dir = self.settings_json['img_cache']['input_dir']
-        output_img_dir = self.settings_json['img_cache']['output_dir']
-        os.makedirs(output_img_dir, exist_ok=True)
+        if output_img_dir == "":
+            output_img_dir = self.settings_json['img_cache']['output_dir']
         
+        if input_img_dir == "":
+            input_img_dir = self.settings_json['img_cache']['input_dir']
+        
+        os.makedirs(output_img_dir, exist_ok=True)
+
         for filename in os.listdir(input_img_dir):
             if filename.endswith(('.jpg', '.jpeg', '.png')):
+
+                
+             
                 
                 image_path = os.path.join(input_img_dir, filename)
                 
@@ -152,6 +154,16 @@ class ParkOff():
                 
                 
                 if not os.path.exists(output_path):
+
+                    try:
+                        self.tempC = self.get_cpu_temperature()
+
+                    except Exception as e:
+                        self.log.info(e)
+
+                    if self.tempC > 75:
+                        self.log.info(f"CPU Temperature is high[{self.tempC}], will analyse results later..")
+                        return
 
                     self.log.info(f"Running Analysis on Input Image'{image_path}'")
                     self.log.debug(f"Output Image'{output_path}'")
@@ -177,26 +189,40 @@ class ParkOff():
                     self.log.debug(f"Found {len(results)} elements in the image")
                     
                     vehicles = self._get_vehicles(results)
+                    curbs = self._get_curbs(image_rgb,debug=debug,output_img_dir=output_img_dir,filename=filename)
+                    filtered_curbs = self._filter_curbs(image=image_rgb,curbs=curbs)
+                    parked_vehicles = self._find_parked_vehicles(vehicles, filtered_curbs)
+
+                    if debug == True:
+                        image = cv2.imread(image_path)
+                        image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+                        result_image = self._draw_image(image=image_rgb, curbs=[], vehicles=vehicles)
+                        output_path = os.path.join(output_img_dir,"vehicle_"+filename)
+                        cv2.imwrite(img=result_image,filename=output_path)
+
+                        image = cv2.imread(image_path)
+                        image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+                        result_image2 = self._draw_image(image=image_rgb,curbs=curbs,vehicles= [])
+                        output_path = os.path.join(output_img_dir,"curbs_"+filename)
+                        cv2.imwrite(img=result_image2,filename=output_path)
+
+                        image = cv2.imread(image_path)
+                        image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+                        result_image2 = self._draw_image(image=image_rgb,curbs=filtered_curbs,vehicles= [])
+                        output_path = os.path.join(output_img_dir,"filtered_curbs_"+filename)
+                        cv2.imwrite(img=result_image2,filename=output_path)
+
+                        image = cv2.imread(image_path)
+                        image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+                        result_image3 = self._draw_image(image=image_rgb,curbs=curbs,vehicles=parked_vehicles)
+                        output_path = os.path.join(output_img_dir,"parked_vehicles_"+filename)
+                        cv2.imwrite(img=result_image3,filename=output_path)
 
 
-                    curbs = self._get_curbs(image_rgb)
-
-                    parked_vehicles = self._find_parked_vehicles(vehicles, curbs)
-
-                    result_image = self._draw_image(image_rgb, curbs, parked_vehicles)
-
-                    cv2.imwrite(img=result_image,filename=output_path)
-
-
-            # for result in results:
-            #     # boxes = result.boxes  # Boxes object for bounding box outputs
-            #     # masks = result.masks  # Masks object for segmentation masks outputs
-            #     # keypoints = result.keypoints  # Keypoints object for pose outputs
-            #     # probs = result.probs  # Probs object for classification outputs
-            #     # obb = result.obb  # Oriented boxes object for OBB outputs
-            #     # # result.show()  # display to screen
-            #     # # output_img_path= "/Users/riteshtekriwal/Work/GitClones/adhoc/sample_data/output/test1_1_2024-07-03 22:47:24.336888.png"
-            #     result.save(filename=output_path)  # save to disk
+                        
+                    if debug == False:
+                        result_image = self._draw_image(image=image_rgb, curbs= curbs, vehicles=parked_vehicles)
+                        cv2.imwrite(img=result_image,filename=output_path)
     
 
     def cache_all_images(self):
@@ -217,7 +243,8 @@ class ParkOff():
         if system == "Linux":
             return self._get_cpu_temp_rpi() or self._get_cpu_temp_linux()
         elif system == "Darwin":  # macOS
-            return self._get_cpu_temp_mac()
+            return 50 # Darwin needs root perms. Skip for now
+            # return self._get_cpu_temp_mac()
         else:
             return None  # Unsupported platform
 
@@ -338,28 +365,19 @@ class ParkOff():
         for result in results:
             for box in result.boxes:
                 cls = int(box.cls[0])  # Class ID
-                if cls in [2, 3, 5, 7]:  # Car, truck, bus, motorcycle
+                if cls in self._get_yolo_class_ids(self.model, ['car','truck','bus','bicycle']):  # Car, truck, bus, motorcycle
                     x1, y1, x2, y2 = map(int, box.xyxy[0])  # Bounding box coordinates
                     vehicles.append((x1, y1, x2, y2))
         
         return vehicles
+    
+    def _filter_curbs(self,image,curbs):
 
-    def _get_curbs(self,image):
-        # Detect curb using Hough Transform
-        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-        # blurred = cv2.GaussianBlur(gray, (self.settings_json['settings']['curb_detection']["blur_box_edge"], self.settings_json['settings']['curb_detection']["blur_box_edge"]), 0)
-        blurred = cv2.GaussianBlur(gray, (3, 7), 0)
-        # blurred = gray
-        edges = cv2.Canny(blurred, self.settings_json['settings']['curb_detection']["canny_thres_0"], self.settings_json['settings']['curb_detection']["canny_thres_1"])
-        # edges = cv2.Canny(blurred, 100, 75)
-        # curb_lines = cv2.HoughLinesP(edges, 1, np.pi / 180, threshold=220, minLineLength=50, maxLineGap=15)
-        curb_lines = cv2.HoughLinesP(edges, 1, np.pi / 180, threshold=self.settings_json['settings']['curb_detection']["color_gradient_thrs"], minLineLength=self.settings_json['settings']['curb_detection']["min_straight_line"], maxLineGap=self.settings_json['settings']['curb_detection']["max_gap_bw_lines"])
-
-        # Apply Hough Transform and Filter by Color
+         # Apply Hough Transform and Filter by Color
         filtered_curb_lines = []
 
-        if curb_lines is not None:
-            for line in curb_lines:
+        if curbs is not None:
+            for line in curbs:
                 x1, y1, x2, y2 = line[0]
 
                 if not self._is_unwanted_color(image, x1, y1, x2, y2):
@@ -368,36 +386,59 @@ class ParkOff():
 
         return filtered_curb_lines
 
+    
+    
+    def _get_curbs(self,image, debug=False, output_img_dir = "",filename=""):
+        # Detect curb using Hough Transform
+        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+
+        blurred = cv2.GaussianBlur(gray, (self.settings_json['settings']['curb_detection']["blur_box_edge"], self.settings_json['settings']['curb_detection']["blur_box_edge"]), 0)
+        
+        edges = cv2.Canny(blurred, self.settings_json['settings']['curb_detection']["canny_thres_0"], self.settings_json['settings']['curb_detection']["canny_thres_1"])
+        # edges = cv2.Canny(blurred, 100, 75)
+        # curb_lines = cv2.HoughLinesP(edges, 1, np.pi / 180, threshold=220, minLineLength=50, maxLineGap=15)
+        curb_lines = cv2.HoughLinesP(edges, 1, np.pi / 180, threshold=self.settings_json['settings']['curb_detection']["color_gradient_thrs"], minLineLength=self.settings_json['settings']['curb_detection']["min_straight_line"], maxLineGap=self.settings_json['settings']['curb_detection']["max_gap_bw_lines"])
+        
+        if debug == True:
+            output_path = os.path.join(output_img_dir,"blurred_"+filename)
+            cv2.imwrite(img=blurred,filename=output_path)
+
+            output_path = os.path.join(output_img_dir,"edges_"+filename)
+            cv2.imwrite(img=edges,filename=output_path)
+
+        
+    
+        return curb_lines
+
     def _draw_image(self, image,curbs,vehicles):
         # Draw detected curbs in green
         
-        if curbs is not None:
+        if (curbs is not None): 
+            print(f"Curbs:{len(curbs)}")
             for line in curbs:
                 x1, y1, x2, y2 = line[0]
                 cv2.line(image, (x1, y1), (x2, y2), (0, 255, 0), 3)  # Green curb lines
         
 
-        if vehicles is not None:
-            for (x1, y1, x2, y2,curb_id) in vehicles:
-                if curb_id is np.nan:
-                    color = (0, 0, 10)
-                else:
-                    color = (0,0,255)
+        if (vehicles is not None) and len(vehicles) != 0  : 
+            print(f"Vehicles:{len(vehicles)}")
 
-            # cv2.rectangle(image, (x1, y1), (x2, y2), color, 3)
+            if len(vehicles[0]) == 5:
+                for (x1, y1, x2, y2,curb_id) in vehicles:
+                    if curb_id is np.nan:
+                        color = (255, 0, 0)
+                    else:
+                        color = (0,255,0)
+                    cv2.rectangle(image, (int(x1), int(y1)), (int(x2), int(y2)), color, 3)
+
+            elif len(vehicles[0]) == 4:
+                for (x1, y1, x2, y2) in vehicles:
+                    color = (0,255,0)
+                    cv2.rectangle(image, (int(x1), int(y1)), (int(x2), int(y2)), color, 3)
         
         out_image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
         return out_image
-
-# Show results
-        # plt.figure(figsize=(10, 5))
-        # plt.title("Detected Cars & Curbs (Red = Parked Near Curb)")
-        # plt.imshow(image_with_detections_rgb)
-        # plt.axis("off")
-        # plt.show()
-                
-                # return image
 
 
 
