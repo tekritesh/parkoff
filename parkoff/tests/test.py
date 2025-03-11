@@ -3,7 +3,7 @@
 from parkoff.base import ParkOff
 
 
-inst = ParkOff(settings_json="/Users/riteshtekriwal/Work/GitClones/parkoff/settings.json")
+inst = ParkOff(settings_json="settings.json")
 
 
 inst.cache_all_images()
