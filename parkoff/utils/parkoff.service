@@ -1,0 +1,17 @@
+[Unit]
+Description=Parkoff Scheduler Script
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/bin/bash -c ' source /home/pi/Work/parkoff/.parkoff/bin/activate  &&  python scheduler.py --logpath /home/pi/Work/parkoff/. >> /home/pi/Data/parkoff/logfile.log 2>&1'
+WorkingDirectory=/home/pi/Work/parkoff/parkoff/parkoff
+User=pi
+Group=pi
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+
+
