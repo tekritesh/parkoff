@@ -18,7 +18,7 @@ class ParkOff():
     
     def __init__(self,settings_json="", logger = "", log_level=logging.INFO):
 
-        """initialising class with dataframe
+        """initialising class 
         args:
             log_level(logging.level): log level for the class
         """
@@ -33,6 +33,13 @@ class ParkOff():
         self.tempC = -1
 
     def _read_image_from_url(self,url):
+
+        """supplimentary function to read an image from url
+        args:
+            url(str): url pointing to an image
+        """
+
+
         # Fetch the image from the URL
         self.log.debug("Fetching image from %s" % (url))
         response = requests.get(url,verify=False )
@@ -52,10 +59,6 @@ class ParkOff():
             json_file_path: metric sheet in json
         """
         
-        # try :a
-        #     if not os.path.exists(json_file_path):
-        #             self.log.error("Json Doesnt Exist")
-        #     else :
         try:
             if json_file_path == '':
                 json_file_path = "../settings.json"
@@ -105,6 +108,14 @@ class ParkOff():
 
 
     def cache_image_from_url(self,url="", cache_dir=""):
+        
+        """reads and saves an image from a given url 
+        args:
+            url(str): url pointing to an image
+            cache_dir(str): filepath to save the image
+            
+        """
+
        
         # url = 'https://www.seattle.gov/trafficcams/images/1_Seneca_EW.jpg?619'
         image = self._read_image_from_url(url)
@@ -122,7 +133,19 @@ class ParkOff():
         cv2.imwrite(output_path, image)
 
     def analyse_image(self, model='',input_img_dir="", output_img_dir="", debug = False):
+        
+        """performs detection on a given image
+            - Yolo Object Detection
+            - Canny Edge Detection for Curbs
+            - Filter Parked Vehicles
 
+        args:
+            model(str): Yolo model to use
+            input_img_dir(str): filepath to read the input image from
+            output_img_dir(str): filepath to save the result
+            debug(boolean): If True it saves an output at every step
+            
+        """
         
 
         model_name = self._check_model_format()
@@ -226,6 +249,11 @@ class ParkOff():
     
 
     def cache_all_images(self):
+        """Loop through urls to save image
+    
+        args:
+            
+        """
         for iLink in self.settings_json['img_source']:
             iurl = iLink['url']
             self.cache_image_from_url(iurl,self.settings_json['img_cache']['input_dir'])
@@ -238,6 +266,12 @@ class ParkOff():
         return class_ids
     
     def get_cpu_temperature(self):
+        """Get the CPU temperature for the target hardware
+
+            args:
+            
+        """
+
         system = platform.system()
         self.log.info(f"Executing on a {system} system")
         if system == "Linux":
@@ -250,6 +284,11 @@ class ParkOff():
 
 
     def _get_cpu_temp_rpi(self):
+        """Get the CPU temperature for RPI
+
+            args:
+            
+        """
         try:
             with open("/sys/class/thermal/thermal_zone0/temp", "r") as f:
                 temp = int(f.read()) / 1000.0  # Convert from millidegree
@@ -261,6 +300,11 @@ class ParkOff():
 
 
     def _get_cpu_temp_linux(self):
+        """Get the CPU temperature for linux
+
+            args:
+            
+        """
         try:
             output = subprocess.check_output(["sensors"]).decode("utf-8")
             for line in output.split("\n"):
@@ -272,6 +316,11 @@ class ParkOff():
             return None
     
     def _get_cpu_temp_mac(self):
+        """Get the CPU temperature for Darwin/Mac
+                Needs root access
+            args:
+            
+        """
         try:
             output = subprocess.check_output(["osx-cpu-temp"]).decode("utf-8")
             temp = float(output.split("°")[0])  # Extracts temperature
@@ -330,7 +379,9 @@ class ParkOff():
 
 
     def _is_unwanted_color(self,image, x1, y1, x2, y2):
-        """ Check if a line is a specific color (e.g., white/yellow road markings) """
+        """ 
+            Check if a line is a specific color (e.g., white/yellow road markings) 
+        """
         hsv_image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
 
         # Define unwanted color ranges (adjust as needed)
@@ -360,6 +411,11 @@ class ParkOff():
 
 
     def _get_vehicles(self, results):
+
+        """Filters vehiceles from yolo results
+           
+            args:
+        """
         # Get detected vehicles
         vehicles = []
         for result in results:
@@ -372,6 +428,11 @@ class ParkOff():
         return vehicles
     
     def _filter_curbs(self,image,curbs):
+
+        """Filters curbs by color
+           
+            args:
+        """
 
          # Apply Hough Transform and Filter by Color
         filtered_curb_lines = []
@@ -389,6 +450,16 @@ class ParkOff():
     
     
     def _get_curbs(self,image, debug=False, output_img_dir = "",filename=""):
+
+
+        """Finds the curbs in a given image
+           
+            args:
+                debug(boolean): if True, it saves the output at every process
+                output_img_dir(str): filepath to save the output to
+                filename(str): base filename to use
+        """
+
         # Detect curb using Hough Transform
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
@@ -412,16 +483,21 @@ class ParkOff():
 
     def _draw_image(self, image,curbs,vehicles):
         # Draw detected curbs in green
-        
+        """Draw the image with curbs, vehicles
+           
+            args:
+                image(cv2.image): if True, it saves the output at every process
+                curbs(list): list of coordinates pointing curbs
+                vehicles(list): bounding box for vehicles from yolos
+        """
+
         if (curbs is not None): 
-            print(f"Curbs:{len(curbs)}")
             for line in curbs:
                 x1, y1, x2, y2 = line[0]
                 cv2.line(image, (x1, y1), (x2, y2), (0, 255, 0), 3)  # Green curb lines
         
 
         if (vehicles is not None) and len(vehicles) != 0  : 
-            print(f"Vehicles:{len(vehicles)}")
 
             if len(vehicles[0]) == 5:
                 for (x1, y1, x2, y2,curb_id) in vehicles:
@@ -443,6 +519,13 @@ class ParkOff():
 
 
     def _find_parked_vehicles(self, vehicles, curbs):
+        
+        """Find Parked Vehicle next to curb
+           
+            args:
+                curbs(list): list of coordinates pointing curbs
+                vehicles(list): bounding box for vehicles from yolos
+        """
         
         if len(vehicles) > 0 and len(curbs)>0:
         
