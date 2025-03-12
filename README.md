@@ -75,11 +75,11 @@ Finally, this could all be overlaid as a custom layer on Open Street Maps.
 
 ## Folder Structure
 
-**parkoff/parkoff:** Contains Functions and definition
-
-**parkoff/tests:** Contains Unit Test Case
-
-**parkoff/utils:** Contains Service Script for Raspberry Pi Deployment
+ **parkoff/parkoff:** Contains Functions and definition
+ 
+ **parkoff/tests:** Contains Unit Test Case
+ 
+ **parkoff/utils:** Contains Service Script for Raspberry Pi Deployment
 
 ## Installation
 
