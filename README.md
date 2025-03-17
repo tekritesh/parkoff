@@ -13,15 +13,22 @@ Finding a parking spot in downtown of any city is a major issue and especially w
 
 The cameras are located on all major jucntions and crossings and have a decent picture as you can see 
 
-<img src="parkoff/img/sample.png" width="200"> 
-<img src="parkoff/img/sample2.png" width="200">
+<img src="parkoff/img/camera_samples.png" width="800"> 
 
 
-This project aims at querying this data, make a cache, and then run some object detection model on these images to find cars parked by the curbs.
+This project aims at querying this data, make a cache, and then run object detection model on these images to find cars parked by the curbs.
 
-A stretch goal is to detect the weather conditions by these images and get a near real time update if it is convinient to walk down a few blocks.
+Some of the stretch goals woule be:
+- Lightweight Curb Detection using OpenCV
+- Detect the weather conditions by these images and get a near real time update if it is convinient to walk down a few blocks.
 
 Finally, this could all be overlaid as a custom layer on Open Street Maps. 
+
+A quick litmus test with ChatGPT gave not so pleasing results.
+
+<img src="parkoff/img/state_of_art.png" width="800"> 
+
+
 
 
 ## Project Outline and Goals:
@@ -37,10 +44,13 @@ Finally, this could all be overlaid as a custom layer on Open Street Maps.
 - App and Backend &#9744;
  
 
-##  Constrains:
+##  Constraints:
 - Every Traffic Cam updates 1 min
 - Glare often spoils the picture quality
 - Perspective of Traffic Cams oftens makes it hard to identify Gaps in between cars
+
+
+<img src="parkoff/img/limitations.png" width="800">
 
 
 
@@ -106,6 +116,8 @@ Local Test of the package
 ```
 poetry run pytest
 ```
+
+<img src="parkoff/img/test.png" width="800">
 
 ## Usage
 
@@ -343,11 +355,28 @@ tail -f Data/parkoff/logfile.log
 
 ## Contributing
 
+https://github.com/tekritesh/parkoff
+
+## Self-Assessnebt if Assignment 2 Characterisation
+
+- **Raspian OS**: I had to move to 64bit OS from the erstwhile 32bit in order to support YOLO to run on Raspberry pi.
+
+- **Temperature Profiling**: The temperature profiling done in the previous assignment was handy to set monitoring for this service script to execute successfully. The stress test performed worked as a guide to monitor operating range for the module.
+
+- **Memory Read/Write**:  The data write speed test correlates well with the project where there are write operations of around 2-3MB files every minute. 
+
+- **Float Point Math**: The benchmark performed in the previous assignment is good guide to how much time it should take per image to execute and run the analysis. 
+ 
+- **Boot Sequence**: The learings on boot sequence came handy to  write the system service script by ensuring that the entire board has booted successfully before running any custom operation. 
 
 ## Mass Production Readiness:
-The package has been released on PyPi [here](https://pypi.org/project/parkoff/)
 
+The package has been released on PyPi [here](https://pypi.org/project/parkoff/) which can be deployed on any Raspberry Pi running 64bit OS with python 3.11 or above. 
 
+## Future Plans:
+- Use threads to improvise and parallelise analysis for multiple images at the same time
+- Use multiple cores instead of 1 to keep the CPU % low.
+- Improve the curb detection algorithm
 
 ## Conclusion:
 While this project is a Work in Progress, it bears some interesting possibilites with regards to monitoring and understand traffic patterns. It also confirms the fact that a RPI 4 is sufficient for the needs of such a work. 
@@ -356,3 +385,5 @@ While this project is a Work in Progress, it bears some interesting possibilites
 - [Wikipedia](https://www.wikipedia.org/)
 - [RaspberryPi](https://www.raspberrypi.com/)
 - [StackOverFlow](https://stackoverflow.com/)
+- [ChatGPT](https://chatgpt.com/)
+
