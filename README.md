@@ -362,7 +362,7 @@ tail -f Data/parkoff/logfile.log
 
 https://github.com/tekritesh/parkoff
 
-## Self-Assessnebt if Assignment 2 Characterisation
+## Self-Assessnebt of Assignment 2 Characterisation
 
 - **Raspian OS**: I had to move to 64bit OS from the erstwhile 32bit in order to support YOLO to run on Raspberry pi.
 
