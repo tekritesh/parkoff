@@ -85,11 +85,11 @@ A quick litmus test with ChatGPT gave not so pleasing results.
 
 ## Folder Structure
 
-**parkoff/parkoff:** Contains Functions and definition
-
-**parkoff/tests:** Contains Unit Test Case
-
-**parkoff/utils:** Contains Service Script for Raspberry Pi Deployment
+ **parkoff/parkoff:** Contains Functions and definition
+ 
+ **parkoff/tests:** Contains Unit Test Case
+ 
+ **parkoff/utils:** Contains Service Script for Raspberry Pi Deployment
 
 ## Installation
 
