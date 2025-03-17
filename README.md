@@ -336,6 +336,11 @@ Here is a look at the logs on RPi
 In case the temperature is over the set threshold, the service skips analysing the images and only caches the files. It is designed to come back for analysing at a later point in time. 
 
 
+You can see below how the temperature rises every minutes when the analysis is run
+<img src="parkoff/img/temp_timeseries.png" width="600"> 
+
+
+
 **Service Monitoring**
 
 You can monitor the status of the service and it's logs by running 
